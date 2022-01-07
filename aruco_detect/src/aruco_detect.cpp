@@ -343,12 +343,15 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg)
     fva.header.stamp = msg->header.stamp;
     fva.header.frame_id = frameId;
     fva.image_seq = msg->header.seq;
+    
 
     try {
         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+        
 
         aruco::detectMarkers(cv_ptr->image, dictionary, corners, ids, detectorParams);
-
+        //cv::imshow("image", cv_ptr->image);
+        //cv::waitKey(1);
         int detected_count = (int)ids.size();
         if(verbose || detected_count != prev_detected_count){
             prev_detected_count = detected_count;
@@ -531,6 +534,8 @@ void FiducialsNode::poseEstimateCallback(const FiducialArrayConstPtr & msg)
             ROS_ERROR("cv exception: %s", e.what());
         }
     }
+    cv::imshow("image", cv_ptr->image);
+    cv::waitKey(1);
     if (vis_msgs)
         pose_pub.publish(vma);
     else 
@@ -568,6 +573,7 @@ void FiducialsNode::handleIgnoreString(const std::string& str)
            ROS_ERROR("Malformed ignore_fiducials: %s", element.c_str());
         }
     }
+
 }
 
 bool FiducialsNode::enableDetectionsCallback(std_srvs::SetBool::Request &req,
@@ -608,7 +614,7 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
 
     pnh.param<bool>("publish_images", publish_images, false);
     pnh.param<double>("fiducial_len", fiducial_len, 0.14);
-    pnh.param<int>("dictionary", dicno, 7);
+    pnh.param<int>("dictionary", dicno, 11);
     pnh.param<bool>("do_pose_estimation", doPoseEstimation, true);
     pnh.param<bool>("publish_fiducial_tf", publishFiducialTf, true);
     pnh.param<bool>("vis_msgs", vis_msgs, false);
@@ -659,7 +665,8 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
         }
     }
 
-    image_pub = it.advertise("/fiducial_images", 1);
+    //image_pub = it.advertise("/fiducial_images", 1);
+    //cv::imshow("fiducial image",cv_ptr->image);
 
     vertices_pub = nh.advertise<fiducial_msgs::FiducialArray>("fiducial_vertices", 1);
 
@@ -670,12 +677,12 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
 
     dictionary = aruco::getPredefinedDictionary(dicno);
 
-    img_sub = it.subscribe("camera", 1,
+    img_sub = it.subscribe("camera/image_raw", 1,
                         &FiducialsNode::imageCallback, this);
 
     vertices_sub = nh.subscribe("fiducial_vertices", 1,
                     &FiducialsNode::poseEstimateCallback, this);
-    caminfo_sub = nh.subscribe("camera_info", 1,
+    caminfo_sub = nh.subscribe("/camera/camera_info", 1,
                     &FiducialsNode::camInfoCallback, this);
 
     ignore_sub = nh.subscribe("ignore_fiducials", 1,
@@ -686,9 +693,10 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
 
     callbackType = boost::bind(&FiducialsNode::configCallback, this, _1, _2);
     configServer.setCallback(callbackType);
+    
 
     pnh.param<double>("adaptiveThreshConstant", detectorParams->adaptiveThreshConstant, 7);
-    pnh.param<int>("adaptiveThreshWinSizeMax", detectorParams->adaptiveThreshWinSizeMax, 53); /* defailt 23 */
+    pnh.param<int>("adaptiveThreshWinSizeMax", detectorParams->adaptiveThreshWinSizeStep, 23); /* defailt 23 */
     pnh.param<int>("adaptiveThreshWinSizeMin", detectorParams->adaptiveThreshWinSizeMin, 3);
     pnh.param<int>("adaptiveThreshWinSizeStep", detectorParams->adaptiveThreshWinSizeStep, 4); /* default 10 */
     pnh.param<int>("cornerRefinementMaxIterations", detectorParams->cornerRefinementMaxIterations, 30);
@@ -727,13 +735,13 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
     pnh.param<double>("polygonalApproxAccuracyRate", detectorParams->polygonalApproxAccuracyRate, 0.01); /* default 0.05 */
 
     ROS_INFO("Aruco detection ready");
+    //ROS_INFO("doRefinement : %d",detectorParams->doCornerRefinement );
 }
 
 int main(int argc, char ** argv) {
     ros::init(argc, argv, "aruco_detect");
 
     FiducialsNode* fd_node = new FiducialsNode();
-
     ros::spin();
 
     return 0;
