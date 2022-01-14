@@ -613,7 +613,7 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
     detectorParams = new aruco::DetectorParameters();
 
     pnh.param<bool>("publish_images", publish_images, false);
-    pnh.param<double>("fiducial_len", fiducial_len, 0.14);
+    pnh.param<double>("fiducial_len", fiducial_len, 0.20);
     pnh.param<int>("dictionary", dicno, 11);
     pnh.param<bool>("do_pose_estimation", doPoseEstimation, true);
     pnh.param<bool>("publish_fiducial_tf", publishFiducialTf, true);
