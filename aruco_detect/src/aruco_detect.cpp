@@ -118,6 +118,7 @@ class FiducialsNode {
 
     cv::Ptr<aruco::DetectorParameters> detectorParams;
     cv::Ptr<aruco::Dictionary> dictionary;
+    Mat m_histImg;
 
     void handleIgnoreString(const std::string& str);
 
@@ -348,8 +349,15 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg)
     try {
         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
         
+        Mat l_grayImg;
+		cvtColor(cv_ptr->image, l_grayImg, COLOR_RGB2GRAY);
+		cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
+		clahe->setClipLimit(5);
+		clahe->setTilesGridSize(cv::Size(2, 2));
+		clahe->apply(l_grayImg, m_histImg);
 
-        aruco::detectMarkers(cv_ptr->image, dictionary, corners, ids, detectorParams);
+
+        aruco::detectMarkers(m_histImg, dictionary, corners, ids, detectorParams);
         //cv::imshow("image", cv_ptr->image);
         //cv::waitKey(1);
         int detected_count = (int)ids.size();
@@ -431,7 +439,7 @@ void FiducialsNode::poseEstimateCallback(const FiducialArrayConstPtr & msg)
                                       reprojectionError);
 
             for (size_t i=0; i<ids.size(); i++) {
-                aruco::drawAxis(cv_ptr->image, cameraMatrix, distortionCoeffs,
+                aruco::drawAxis(m_histImg, cameraMatrix, distortionCoeffs,
                                 rvecs[i], tvecs[i], (float)fiducial_len);
                 if(verbose){
                     ROS_INFO("Detected id %d T %.2f %.2f %.2f R %.2f %.2f %.2f", ids[i],
@@ -534,7 +542,7 @@ void FiducialsNode::poseEstimateCallback(const FiducialArrayConstPtr & msg)
             ROS_ERROR("cv exception: %s", e.what());
         }
     }
-    cv::imshow("image", cv_ptr->image);
+    cv::imshow("image", m_histImg);
     cv::waitKey(1);
     if (vis_msgs)
         pose_pub.publish(vma);
