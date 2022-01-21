@@ -349,17 +349,24 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg)
     try {
         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
         
+        //ROS_INFO("test1");
         Mat l_grayImg;
-		cvtColor(cv_ptr->image, l_grayImg, COLOR_RGB2GRAY);
-		cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
-		clahe->setClipLimit(5);
-		clahe->setTilesGridSize(cv::Size(2, 2));
+		//ROS_INFO("test2");
+        cvtColor(cv_ptr->image, l_grayImg, COLOR_RGB2GRAY);
+		//ROS_INFO("test3");
+        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
+        //ROS_INFO("test4");
+        clahe->setClipLimit(5);
+        //ROS_INFO("test5");
+		
+        clahe->setTilesGridSize(cv::Size(2, 2));
 		clahe->apply(l_grayImg, m_histImg);
 
-
+        //ROS_INFO("test6");
         aruco::detectMarkers(m_histImg, dictionary, corners, ids, detectorParams);
         //cv::imshow("image", cv_ptr->image);
         //cv::waitKey(1);
+        //ROS_INFO("test7");
         int detected_count = (int)ids.size();
         if(verbose || detected_count != prev_detected_count){
             prev_detected_count = detected_count;
@@ -390,7 +397,7 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg)
         vertices_pub.publish(fva);
 
         if(ids.size() > 0) {
-            aruco::drawDetectedMarkers(cv_ptr->image, corners, ids);
+            aruco::drawDetectedMarkers(m_histImg, corners, ids);
         }
 
         if (publish_images) {
@@ -743,6 +750,7 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
     pnh.param<double>("polygonalApproxAccuracyRate", detectorParams->polygonalApproxAccuracyRate, 0.01); /* default 0.05 */
 
     ROS_INFO("Aruco detection ready");
+    ROS_INFO(CV_VERSION);
     //ROS_INFO("doRefinement : %d",detectorParams->doCornerRefinement );
 }
 
