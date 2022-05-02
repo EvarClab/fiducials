@@ -1,7 +1,7 @@
 <!-- Run the aruco_detect node -->
 <launch>
   <!-- namespace for camera input -->
-  <arg name="camera" default="/raspicam_node"/>
+  <arg name="cam_name" default="/raspicam_node"/>
   <arg name="image" default="image"/>
   <arg name="transport" default="compressed"/>
   <arg name="fiducial_len" default="0.20"/>
@@ -24,8 +24,9 @@
     <param name="ignore_fiducials" value="$(arg ignore_fiducials)"/>
     <param name="fiducial_len_override" value="$(arg fiducial_len_override)"/>
     <param name="verbose" value="$(arg verbose)"/>
+    <param name="cam_name" value="$(arg cam_name)"/>
     <remap from="camera/compressed" 
-        to="$(arg camera)/$(arg image)/$(arg transport)"/>
-    <remap from="camera_info" to="$(arg camera)/camera_info"/>
+        to="$(arg cam_name)/$(arg image)/$(arg transport)"/>
+    <remap from="camera_info" to="$(arg cam_name)/camera_info"/>
   </node>
 </launch>

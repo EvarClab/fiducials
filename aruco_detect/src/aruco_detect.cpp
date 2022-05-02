@@ -549,8 +549,8 @@ void FiducialsNode::poseEstimateCallback(const FiducialArrayConstPtr & msg)
             ROS_ERROR("cv exception: %s", e.what());
         }
     }
-    cv::imshow("image", m_histImg);
-    cv::waitKey(1);
+    // cv::imshow("image", m_histImg);
+    // cv::waitKey(1);
     if (vis_msgs)
         pose_pub.publish(vma);
     else 
@@ -614,6 +614,7 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
     frameNum = 0;
     prev_detected_count = -1;
 
+    
     // Camera intrinsics
     cameraMatrix = cv::Mat::zeros(3, 3, CV_64F);
 
@@ -631,14 +632,17 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
     pnh.param<double>("fiducial_len", fiducial_len, 0.20);
     pnh.param<int>("dictionary", dicno, 11);
     pnh.param<bool>("do_pose_estimation", doPoseEstimation, true);
-    pnh.param<bool>("publish_fiducial_tf", publishFiducialTf, true);
+    pnh.param<bool>("publish_fiducial_tf", publishFiducialTf, false);
     pnh.param<bool>("vis_msgs", vis_msgs, false);
     pnh.param<bool>("verbose", verbose, false);
 
     std::string str;
+    std::string cam_name;
     std::vector<std::string> strs;
 
+
     pnh.param<string>("ignore_fiducials", str, "");
+    pnh.param<string>("cam_name", cam_name, "");
     handleIgnoreString(str);
 
     /*
@@ -683,21 +687,21 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
     //image_pub = it.advertise("/fiducial_images", 1);
     //cv::imshow("fiducial image",cv_ptr->image);
 
-    vertices_pub = nh.advertise<fiducial_msgs::FiducialArray>("fiducial_vertices", 1);
+    vertices_pub = nh.advertise<fiducial_msgs::FiducialArray>(cam_name + "/fiducial_vertices", 1);
 
     if (vis_msgs)
-        pose_pub = nh.advertise<vision_msgs::Detection2DArray>("fiducial_transforms", 1);
+        pose_pub = nh.advertise<vision_msgs::Detection2DArray>(cam_name + "/fiducial_transforms", 1);
     else        
-        pose_pub = nh.advertise<fiducial_msgs::FiducialTransformArray>("fiducial_transforms", 1);
+        pose_pub = nh.advertise<fiducial_msgs::FiducialTransformArray>(cam_name + "/fiducial_transforms", 1);
 
     dictionary = aruco::getPredefinedDictionary(dicno);
 
-    img_sub = it.subscribe("camera/image_rect_color", 1,
+    img_sub = it.subscribe(cam_name + "/image_rect_color", 1,
                         &FiducialsNode::imageCallback, this);
 
-    vertices_sub = nh.subscribe("fiducial_vertices", 1,
+    vertices_sub = nh.subscribe(cam_name + "/fiducial_vertices", 1,
                     &FiducialsNode::poseEstimateCallback, this);
-    caminfo_sub = nh.subscribe("/camera/camera_info", 1,
+    caminfo_sub = nh.subscribe(cam_name + "/camera_info", 1,
                     &FiducialsNode::camInfoCallback, this);
 
     ignore_sub = nh.subscribe("ignore_fiducials", 1,
