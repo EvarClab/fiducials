@@ -697,6 +697,7 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
     dictionary = aruco::getPredefinedDictionary(dicno);
 
     img_sub = it.subscribe(cam_name + "/image_rect_color", 1,
+
                         &FiducialsNode::imageCallback, this);
 
     vertices_sub = nh.subscribe(cam_name + "/fiducial_vertices", 1,
