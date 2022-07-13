@@ -348,25 +348,17 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg)
 
     try {
         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-        
-        //ROS_INFO("test1");
+   
         Mat l_grayImg;
-		//ROS_INFO("test2");
         cvtColor(cv_ptr->image, l_grayImg, COLOR_RGB2GRAY);
-		//ROS_INFO("test3");
         cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
-        //ROS_INFO("test4");
         clahe->setClipLimit(5);
-        //ROS_INFO("test5");
-		
         clahe->setTilesGridSize(cv::Size(2, 2));
 		clahe->apply(l_grayImg, m_histImg);
-
-        //ROS_INFO("test6");
         aruco::detectMarkers(m_histImg, dictionary, corners, ids, detectorParams);
         //cv::imshow("image", cv_ptr->image);
         //cv::waitKey(1);
-        //ROS_INFO("test7");
+        
         int detected_count = (int)ids.size();
         if(verbose || detected_count != prev_detected_count){
             prev_detected_count = detected_count;
@@ -684,7 +676,7 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
         }
     }
 
-    //image_pub = it.advertise("/fiducial_images", 1);
+    image_pub = it.advertise("/fiducial_images", 1);
     //cv::imshow("fiducial image",cv_ptr->image);
 
     vertices_pub = nh.advertise<fiducial_msgs::FiducialArray>(cam_name + "/fiducial_vertices", 1);
@@ -716,7 +708,7 @@ FiducialsNode::FiducialsNode() : nh(), pnh("~"), it(nh)
     
 
     pnh.param<double>("adaptiveThreshConstant", detectorParams->adaptiveThreshConstant, 7);
-    pnh.param<int>("adaptiveThreshWinSizeMax", detectorParams->adaptiveThreshWinSizeStep, 23); /* defailt 23 */
+    pnh.param<int>("adaptiveThreshWinSizeMax", detectorParams->adaptiveThreshWinSizeMax, 23); /* defailt 23 */
     pnh.param<int>("adaptiveThreshWinSizeMin", detectorParams->adaptiveThreshWinSizeMin, 3);
     pnh.param<int>("adaptiveThreshWinSizeStep", detectorParams->adaptiveThreshWinSizeStep, 4); /* default 10 */
     pnh.param<int>("cornerRefinementMaxIterations", detectorParams->cornerRefinementMaxIterations, 30);
